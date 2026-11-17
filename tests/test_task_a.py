@@ -4,6 +4,20 @@ from backend.hotstuff import HotStuffDemo
 from backend.models import Block, QC
 
 class TaskATests(unittest.TestCase):
+    def test_extends_rejects_unknown_and_malformed_ancestry(self):
+        node = HotStuffDemo().nodes[0]
+        self.assertFalse(node.extends('missing', 'missing'))
+        node.blocks['dangling'] = Block('dangling', 'missing', 1, 1)
+        self.assertFalse(node.extends('dangling', 'dangling'))
+        node.blocks['cycle-a'] = Block('cycle-a', 'cycle-b', 1, 1)
+        node.blocks['cycle-b'] = Block('cycle-b', 'cycle-a', 2, 1)
+        self.assertFalse(node.extends('cycle-a', 'cycle-a'))
+        node.blocks['orphan-root'] = Block('orphan-root', None, 1, 1)
+        self.assertFalse(node.extends('orphan-root', 'orphan-root'))
+        node.blocks['valid-child'] = Block('valid-child', 'B0', 1, 1)
+        self.assertTrue(node.extends('valid-child', 'B0'))
+        self.assertTrue(node.extends('B0', 'B0'))
+
     def test_empty_chain_commits(self):
         d=HotStuffDemo()
         for _ in range(100):

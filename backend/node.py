@@ -29,18 +29,24 @@ class Node:
         """A2 test whether block_id descends from ancestor_id, including itself.
         Use local parent links. Unknown or malformed ancestry must not be
         accepted as an extension. Return a Boolean without modifying state."""
-        # AI-assisted implementation; the student owner must review and explain it.
+        # AI-assisted implementation: reject malformed local parent chains.
+        if block_id not in self.blocks or ancestor_id not in self.blocks:
+            return False
         current_id = block_id
         visited = set()
-        while current_id is not None and current_id not in visited:
-            if current_id == ancestor_id:
-                return True
+        found_ancestor = False
+        root_id = None
+        while current_id is not None:
+            if current_id in visited:
+                return False
             visited.add(current_id)
             block = self.blocks.get(current_id)
             if block is None:
                 return False
+            found_ancestor = found_ancestor or current_id == ancestor_id
+            root_id = current_id
             current_id = block.parent_id
-        return False
+        return found_ancestor and root_id == self.committed_blocks[0]
 
     def can_vote(self, block: Block) -> bool:
         """A2 decide whether this replica may vote for a proposal.
